@@ -47,5 +47,6 @@ jobs:
           docker compose build app
           docker compose up -d app
           docker image prune -f
-          echo "✅ Déploiement 1,2,3 Mot terminé avec succès"
+          echo "✅ Déploiement 1,2,3 Mot terminé avec succès — $(date)"
           DEPLOY
+
