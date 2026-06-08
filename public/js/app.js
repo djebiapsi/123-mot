@@ -37,16 +37,6 @@ function wordValid(word, l1, l2) {
 
 function randomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-const LETTER_POOL = 'AAAABBCCDDDEEEEEFGHIIIIJKLLLLMMMNNNNOOOOPRRRRSSSSTTTTUUUUVWY';
-function randomLetters() {
-  let l1, l2;
-  do {
-    l1 = LETTER_POOL[Math.floor(Math.random() * LETTER_POOL.length)];
-    l2 = LETTER_POOL[Math.floor(Math.random() * LETTER_POOL.length)];
-  } while (l1 === l2);
-  return [l1, l2];
-}
-
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -316,13 +306,15 @@ function soloNewRound() {
   state.roundActive = false;
   state.buzzed = null;
   setStatus('');
+  resetSkipBtn();
 
   const available = CATEGORIES.filter(c => !state.usedCategories.includes(c.name));
   if (available.length === 0) state.usedCategories = [];
-  const cat = randomItem(available.length ? available : CATEGORIES);
+  const pool = available.length ? available : CATEGORIES;
+  const cat = weightedRandom(pool, c => c.weight);
   state.usedCategories.push(cat.name);
 
-  const [l1, l2] = randomLetters();
+  const [l1, l2] = randomLettersWeighted();
   state.currentRound = { category: cat.name, emoji: cat.emoji, grad: cat.grad, letter1: l1, letter2: l2 };
 
   $('round-indicator').textContent = `Manche ${state.rounds.length + 1}`;
@@ -455,6 +447,7 @@ function initSocket() {
 
     $('buzz-multi-btn').disabled = false;
     $('buzz-multi-btn').innerHTML = '🙋 J\'AI TROUVÉ !';
+    resetSkipBtn();
 
     Sounds.roundStart();
     Sounds.vibrate([50, 30, 50]);
@@ -534,6 +527,8 @@ function initSocket() {
     $('history-list').innerHTML = '';
     updateScores();
   });
+
+  initSkipMultiListeners();
 
   socket.on('player-disconnected', ({ playerName }) => {
     toast(`⚠️ ${playerName} s'est déconnecté`, 'error', 4000);
@@ -720,6 +715,55 @@ $('btn-start-solo').addEventListener('click', () => {
   Sounds.click();
   setupSoloGame();
 });
+
+// ─── Bouton Passer ────────────────────────────────────────────────────────────
+function resetSkipBtn() {
+  $('btn-skip').classList.remove('voted');
+  $('skip-vote-label').textContent = '';
+}
+
+$('btn-skip').addEventListener('click', () => {
+  if (!state.roundActive) return;
+  Sounds.click();
+
+  if (state.mode === 'solo') {
+    // 1 clic = passage immédiat
+    stopTimer();
+    state.roundActive = false;
+    $('buzz-p1').disabled = true;
+    $('buzz-p2').disabled = true;
+    Sounds.lose();
+    setStatus('⏭️ Manche passée', 'draw');
+    state.rounds.push({ ...state.currentRound, winner: null, word: null, pi: null });
+    addHistoryItem({ category: state.currentRound.category, winner: null });
+    resetSkipBtn();
+    setTimeout(soloNewRound, 1200);
+  } else {
+    // Multi : envoyer son vote au serveur
+    $('btn-skip').classList.add('voted');
+    socket.emit('vote-skip', { code: state.roomCode });
+  }
+});
+
+// Événements skip multi
+function initSkipMultiListeners() {
+  socket.on('skip-vote-update', ({ votes, needed }) => {
+    if (votes < needed) {
+      $('skip-vote-label').textContent = `(${votes}/${needed})`;
+    }
+  });
+
+  socket.on('round-skipped', ({ category }) => {
+    stopTimer();
+    state.roundActive = false;
+    $('buzz-multi-btn').disabled = true;
+    Sounds.lose();
+    setStatus(`⏭️ Manche passée — "${category}"`, 'draw');
+    addHistoryItem({ category, winner: null });
+    state.rounds.push({ winner: null });
+    resetSkipBtn();
+  });
+}
 
 // Close modal on overlay click
 $('word-modal').addEventListener('click', e => {

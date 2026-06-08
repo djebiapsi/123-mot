@@ -961,6 +961,13 @@ body {
   text-align: center;
 }
 
+/* ── Skip button voted state ───────────────────────────────────────────────── */
+#btn-skip.voted {
+  border: 2px solid var(--warning);
+  color: var(--warning);
+  opacity: 1 !important;
+}
+
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

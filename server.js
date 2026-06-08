@@ -11,139 +11,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const rooms = new Map();
 
-// ─── Catégories (copie serveur) ───────────────────────────────────────────────
-const CATEGORIES = [
-  { name: 'Capitales africaines', emoji: '🌍' },
-  { name: 'Capitales européennes', emoji: '🏰' },
-  { name: "Capitales d'Asie", emoji: '🏯' },
-  { name: "Capitales d'Amérique", emoji: '🗽' },
-  { name: 'Pays du monde', emoji: '🗺️' },
-  { name: 'Villes de France', emoji: '🗼' },
-  { name: 'Villes du monde', emoji: '🌆' },
-  { name: 'Fleuves et rivières', emoji: '🌊' },
-  { name: 'Montagnes', emoji: '⛰️' },
-  { name: 'Îles du monde', emoji: '🏝️' },
-  { name: 'Déserts', emoji: '🏜️' },
-  { name: 'Océans et mers', emoji: '🌊' },
-  { name: 'Lacs', emoji: '💧' },
-  { name: 'Volcans', emoji: '🌋' },
-  { name: "Pays d'Afrique", emoji: '🌍' },
-  { name: 'Footballeurs célèbres', emoji: '⚽' },
-  { name: 'Clubs de football', emoji: '🏆' },
-  { name: 'Sports olympiques', emoji: '🏅' },
-  { name: 'Sports de combat', emoji: '🥊' },
-  { name: 'Tennismen et Tenniswomen', emoji: '🎾' },
-  { name: 'Nageurs', emoji: '🏊' },
-  { name: 'Athlètes', emoji: '🏃' },
-  { name: 'Pilotes de F1', emoji: '🏎️' },
-  { name: 'Basketteurs NBA', emoji: '🏀' },
-  { name: 'Stades de football', emoji: '🏟️' },
-  { name: "Sports d'hiver", emoji: '⛷️' },
-  { name: 'Sports extrêmes', emoji: '🪂' },
-  { name: 'Boxeurs', emoji: '🥊' },
-  { name: 'Cyclistes', emoji: '🚴' },
-  { name: 'Rugbymen', emoji: '🏉' },
-  { name: 'Films', emoji: '🎬' },
-  { name: 'Séries télévisées', emoji: '📺' },
-  { name: 'Dessins animés', emoji: '🎨' },
-  { name: 'Jeux vidéo', emoji: '🎮' },
-  { name: 'Livres célèbres', emoji: '📚' },
-  { name: 'Mangas', emoji: '📖' },
-  { name: 'Acteurs hollywoodiens', emoji: '🎭' },
-  { name: 'Chanteurs et Chanteuses', emoji: '🎤' },
-  { name: 'Groupes de musique', emoji: '🎸' },
-  { name: 'Peintres célèbres', emoji: '🖌️' },
-  { name: 'Superhéros Marvel', emoji: '🦸' },
-  { name: 'Personnages Disney', emoji: '✨' },
-  { name: 'Jeux de société', emoji: '🎲' },
-  { name: 'Instruments de musique', emoji: '🎵' },
-  { name: 'Réalisateurs de films', emoji: '🎥' },
-  { name: 'Comédies musicales', emoji: '🎶' },
-  { name: 'Danses du monde', emoji: '💃' },
-  { name: 'Festivals de musique', emoji: '🎪' },
-  { name: 'Personnages de jeux vidéo', emoji: '👾' },
-  { name: 'Artistes africains', emoji: '🎵' },
-  { name: 'Fruits', emoji: '🍎' },
-  { name: 'Légumes', emoji: '🥦' },
-  { name: 'Desserts du monde', emoji: '🍰' },
-  { name: 'Boissons', emoji: '🥤' },
-  { name: 'Plats africains', emoji: '🍲' },
-  { name: 'Plats asiatiques', emoji: '🍜' },
-  { name: 'Fromages', emoji: '🧀' },
-  { name: 'Cocktails', emoji: '🍹' },
-  { name: 'Épices', emoji: '🌶️' },
-  { name: 'Plats italiens', emoji: '🍕' },
-  { name: 'Fruits de mer', emoji: '🦞' },
-  { name: 'Pâtisseries françaises', emoji: '🥐' },
-  { name: 'Snacks et grignotages', emoji: '🍿' },
-  { name: 'Thés et infusions', emoji: '🍵' },
-  { name: 'Plats végétariens', emoji: '🥗' },
-  { name: "Animaux d'Afrique", emoji: '🦁' },
-  { name: 'Oiseaux', emoji: '🦅' },
-  { name: 'Insectes', emoji: '🦋' },
-  { name: 'Planètes et astres', emoji: '🪐' },
-  { name: 'Éléments chimiques', emoji: '⚗️' },
-  { name: 'Dinosaures', emoji: '🦕' },
-  { name: 'Inventeurs', emoji: '💡' },
-  { name: 'Arbres', emoji: '🌳' },
-  { name: 'Fleurs', emoji: '🌸' },
-  { name: 'Mammifères marins', emoji: '🐬' },
-  { name: 'Reptiles', emoji: '🦎' },
-  { name: 'Roches et minéraux', emoji: '💎' },
-  { name: 'Phénomènes météo', emoji: '⛈️' },
-  { name: 'Constellations', emoji: '⭐' },
-  { name: 'Mathématiciens célèbres', emoji: '🔢' },
-  { name: 'Métiers', emoji: '👷' },
-  { name: 'Marques de luxe', emoji: '💎' },
-  { name: 'Marques de voitures', emoji: '🚗' },
-  { name: 'Objets de bureau', emoji: '💼' },
-  { name: 'Applications mobiles', emoji: '📱' },
-  { name: 'Réseaux sociaux', emoji: '📲' },
-  { name: 'Vêtements et accessoires', emoji: '👗' },
-  { name: 'Matières scolaires', emoji: '📝' },
-  { name: 'Langues du monde', emoji: '🗣️' },
-  { name: 'Monnaies du monde', emoji: '💰' },
-  { name: 'Moyens de transport', emoji: '✈️' },
-  { name: 'Appareils électroniques', emoji: '💻' },
-  { name: 'Meubles', emoji: '🛋️' },
-  { name: 'Prénoms masculins', emoji: '👦' },
-  { name: 'Prénoms féminins', emoji: '👧' },
-  { name: 'Animaux de compagnie', emoji: '🐱' },
-  { name: 'Pays francophones', emoji: '🇫🇷' },
-  { name: "Villes d'Afrique", emoji: '🌆' },
-  { name: 'Marques de téléphones', emoji: '📱' },
-  { name: "Pays d'Asie", emoji: '🌏' },
-  { name: 'Célébrités africaines', emoji: '⭐' },
-  { name: 'Couleurs', emoji: '🌈' },
-  { name: 'Personnages historiques', emoji: '📜' },
-  { name: 'Super-vilains', emoji: '🦹' },
-  { name: 'Animaux de la jungle', emoji: '🌿' },
-  { name: "Pays d'Amérique du Sud", emoji: '🌎' },
-  { name: 'Superhéros DC', emoji: '🦇' },
-  { name: 'Personnages de manga', emoji: '⚡' },
-];
+// ─── Données partagées avec le client ─────────────────────────────────────────
+const { CATEGORIES, weightedRandom, randomLettersWeighted } =
+  require('./public/js/categories.js');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const LETTER_POOL = 'AAAABBCCDDDEEEEEFGHIIIIJKLLLLMMMNNNNOOOOPRRRRSSSSTTTTUUUUVWY';
-
 function randomCode() {
   const chars = 'ABCDEFGHJKLMNPRSTUVWXY23456789';
   let code = '';
   for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
-}
-
-function randomItem(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function randomLetters() {
-  let l1, l2;
-  do {
-    l1 = LETTER_POOL[Math.floor(Math.random() * LETTER_POOL.length)];
-    l2 = LETTER_POOL[Math.floor(Math.random() * LETTER_POOL.length)];
-  } while (l1 === l2);
-  return [l1, l2];
 }
 
 function normalize(str) {
@@ -273,6 +150,35 @@ io.on('connection', (socket) => {
     startNewRound(room);
   });
 
+  // ── Skip : en multi, les deux joueurs doivent voter ──────────────────────
+  socket.on('vote-skip', ({ code }) => {
+    const room = rooms.get(code);
+    if (!room || !room.currentRound?.active) return;
+    if (!room.skipVotes) room.skipVotes = new Set();
+    room.skipVotes.add(socket.id);
+
+    const needed = room.players.length; // 2 en multi
+    io.to(code).emit('skip-vote-update', {
+      votes: room.skipVotes.size,
+      needed,
+    });
+
+    if (room.skipVotes.size >= needed) {
+      room.skipVotes = new Set();
+      room.currentRound.active = false;
+      room.rounds.push({
+        category: room.currentRound.category,
+        letter1: room.currentRound.letter1,
+        letter2: room.currentRound.letter2,
+        winner: null, word: null, skipped: true,
+      });
+      io.to(code).emit('round-skipped', {
+        category: room.currentRound.category,
+      });
+      setTimeout(() => startNewRound(room), 1500);
+    }
+  });
+
   socket.on('timer-expired', ({ code }) => {
     const room = rooms.get(code);
     if (!room || !room.currentRound || room.host !== socket.id) return;
@@ -306,10 +212,11 @@ io.on('connection', (socket) => {
 function startNewRound(room) {
   const available = CATEGORIES.filter(c => !room.usedCategories.includes(c.name));
   if (available.length === 0) room.usedCategories = [];
-  const cat = randomItem(available.length ? available : CATEGORIES);
+  const pool = available.length ? available : CATEGORIES;
+  const cat = weightedRandom(pool, c => c.weight);
   room.usedCategories.push(cat.name);
 
-  const [l1, l2] = randomLetters();
+  const [l1, l2] = randomLettersWeighted();
   room.currentRound = { category: cat.name, emoji: cat.emoji, letter1: l1, letter2: l2, active: true, buzzerId: null };
 
   io.to(room.code).emit('new-round', {
