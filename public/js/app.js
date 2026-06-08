@@ -16,7 +16,8 @@ const state = {
   timerInterval: null,
   timeLeft: 0,
   roundActive: false,
-  buzzed: false,        // solo: qui a buzzé (0 ou 1)
+  gameOver: false,
+  buzzed: null,         // solo: qui a buzzé (0 ou 1)
   usedCategories: [],
 };
 
@@ -130,11 +131,6 @@ function initChips() {
       Sounds.click();
     });
   });
-}
-
-function getChipVal(group, attr) {
-  const selected = group.querySelector('.chip.selected');
-  return selected ? selected.dataset[attr] : null;
 }
 
 // ─── Timer ────────────────────────────────────────────────────────────────────
@@ -279,17 +275,26 @@ function submitWord() {
 // ══ MODE SOLO ══════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
 
+function readSettings(screenId) {
+  const groups = document.querySelectorAll(`#${screenId} .chip-group`);
+  const tChip = groups[0]?.querySelector('.chip.selected');
+  const dChip = groups[1]?.querySelector('.chip.selected');
+  const targetScore  = tChip ? (parseInt(tChip.dataset.target)  || 10) : 10;
+  const timerDuration= dChip ? (parseInt(dChip.dataset.timer) ?? 30)   : 30;
+  return { targetScore, timerDuration };
+}
+
 function setupSoloGame() {
   state.mode = 'solo';
   const p1 = $('solo-p1-name').value.trim() || 'Joueur 1';
   const p2 = $('solo-p2-name').value.trim() || 'Joueur 2';
-  const targetScore = parseInt(getChipVal($('screen-setup-solo').querySelector('.chip-group'), 'target')) || 10;
-  const timerDuration = parseInt(getChipVal($('screen-setup-solo').querySelectorAll('.chip-group')[1], 'timer') ?? '30');
+  const { targetScore, timerDuration } = readSettings('screen-setup-solo');
 
   state.players = [{ name: p1, score: 0 }, { name: p2, score: 0 }];
   state.settings = { targetScore, timerDuration };
   state.rounds = [];
   state.usedCategories = [];
+  state.gameOver = false;
 
   $('buzz-section-solo').style.display = 'flex';
   $('buzz-section-multi').style.display = 'none';
@@ -303,6 +308,7 @@ function setupSoloGame() {
 }
 
 function soloNewRound() {
+  if (state.gameOver) return;           // sécurité : ne pas redémarrer si partie terminée
   state.roundActive = false;
   state.buzzed = null;
   setStatus('');
@@ -382,6 +388,10 @@ function handleSoloWordSubmit(word) {
     addHistoryItem({ category: round.category, winner: state.players[pi].name, word: word.toUpperCase(), pi });
 
     if (state.players[pi].score >= state.settings.targetScore) {
+      state.gameOver = true;
+      stopTimer();
+      $('buzz-p1').disabled = true;
+      $('buzz-p2').disabled = true;
       setTimeout(() => showEndScreen(pi), 1200);
       return;
     }
@@ -516,7 +526,9 @@ function initSocket() {
 
   socket.on('game-over', ({ winnerIndex, players }) => {
     state.players = players;
+    state.gameOver = true;
     stopTimer();
+    $('buzz-multi-btn').disabled = true;
     setTimeout(() => showEndScreen(winnerIndex), 800);
   });
 
@@ -546,11 +558,7 @@ $('btn-create-room').addEventListener('click', () => {
   const name = $('host-name').value.trim();
   if (!name) { toast('Entre ton prénom !', 'error'); return; }
 
-  const setupEl = $('screen-setup-multi');
-  const chips = setupEl.querySelectorAll('.chip-group');
-  const targetScore = parseInt(getChipVal(chips[0], 'target')) || 10;
-  const timerDuration = parseInt(getChipVal(chips[1], 'timer') ?? '30');
-
+  const { targetScore, timerDuration } = readSettings('screen-setup-multi');
   state.settings = { targetScore, timerDuration };
   state.mode = 'multi';
 
@@ -675,6 +683,7 @@ $('btn-rematch').addEventListener('click', () => {
   if (state.mode === 'solo') {
     state.players.forEach(p => p.score = 0);
     state.rounds = [];
+    state.gameOver = false;
     $('history-list').innerHTML = '';
     updateScores();
     showScreen('screen-game');
@@ -783,18 +792,6 @@ initFloatingLetters();
 
 // Chip groups
 initChips();
-
-// Setup chip groups for score/timer selection (binding by data attribute)
-function readChipGroups(screenId) {
-  const s = $(screenId);
-  const chipGroups = s.querySelectorAll('.chip-group');
-  return { targetScore: chipGroups[0], timerDuration: chipGroups[1] };
-}
-
-// Patch: read timer correctly (data-timer attribute)
-document.querySelectorAll('[data-target]').forEach(chip => {
-  chip.parentNode.querySelectorAll('[data-target]').forEach(c => c.classList.remove('selected'));
-});
 
 // Word input uppercase transform
 $('word-input').addEventListener('input', function() {
