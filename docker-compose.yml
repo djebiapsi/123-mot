@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    container_name: 123mot-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    networks:
+      - proxy
+
+# Réseau partagé avec votre reverse-proxy (Nginx/Traefik)
+# Adaptez le nom du réseau selon votre config existante
+networks:
+  proxy:
+    external: true

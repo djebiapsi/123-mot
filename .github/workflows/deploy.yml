@@ -1,0 +1,51 @@
+name: Deploy 1,2,3 Mot to Hetzner
+
+on:
+  push:
+    branches: [main]
+
+# Un seul déploiement à la fois ; les suivants attendent
+concurrency:
+  group: deploy-hetzner-123mot
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        env:
+          SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H 95.216.198.241 >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@95.216.198.241 'bash -s' <<'DEPLOY'
+          set -e
+
+          APP_DIR="/opt/123mot"
+          LOCK="/tmp/123mot-deploy.lock"
+
+          # Verrou : empêche deux déploiements simultanés
+          exec 9>"$LOCK"
+          if ! flock -w 300 9; then
+            echo "Un déploiement est déjà en cours (timeout 300s)"; exit 1
+          fi
+
+          # Créer le dossier si première fois
+          mkdir -p "$APP_DIR"
+          cd "$APP_DIR"
+
+          # Nettoyer les containers zombies éventuels
+          docker ps -a --format '{{.Names}}' \
+            | grep -E '_123mot-(app)-1$' \
+            | xargs -r docker rm -f || true
+
+          git pull origin main
+          docker compose build app
+          docker compose up -d app
+          docker image prune -f
+          echo "✅ Déploiement 1,2,3 Mot terminé avec succès"
+          DEPLOY

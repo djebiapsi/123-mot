@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0F0E17">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>1,2,3 Mot !</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- ══ CONFETTI CANVAS ═══════════════════════════════════════════════════════ -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ══ TOAST CONTAINER ═══════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ══ BUZZ OVERLAY ══════════════════════════════════════════════════════════ -->
+<div class="buzz-overlay" id="buzz-overlay">
+  <div class="buzz-overlay-text" id="buzz-overlay-text"></div>
+</div>
+
+<!-- ══ WORD INPUT MODAL ═══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="word-modal">
+  <div class="modal-sheet">
+    <div class="modal-drag"></div>
+    <div class="modal-title">✍️ Quel est ton mot ?</div>
+    <div class="modal-hint">Le mot doit contenir les deux lettres</div>
+    <div class="modal-letters">
+      <div class="modal-letter-badge l1" id="modal-l1">M</div>
+      <div style="display:flex;align-items:center;color:var(--text-muted);font-weight:900">+</div>
+      <div class="modal-letter-badge l2" id="modal-l2">A</div>
+    </div>
+    <div class="modal-input-row">
+      <input class="modal-word-input" id="word-input" type="text"
+             placeholder="TON MOT..." autocomplete="off" autocorrect="off"
+             autocapitalize="characters" spellcheck="false" maxlength="40">
+      <button class="btn btn-success" id="btn-submit-word">✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- ══ SCREEN: HOME ══════════════════════════════════════════════════════════ -->
+<div class="screen active home-bg" id="screen-home">
+  <div class="floating-letters" id="floating-letters"></div>
+
+  <div class="home-hero">
+    <div class="logo">1,2,3<br>Mot!</div>
+    <div class="logo-sub">Le jeu de lettres</div>
+  </div>
+
+  <div class="home-actions">
+    <button class="btn btn-primary btn-lg" id="btn-play">
+      <span class="btn-icon">🎮</span> Jouer
+    </button>
+    <button class="btn btn-secondary btn-lg" id="btn-join">
+      <span class="btn-icon">🔗</span> Rejoindre une partie
+    </button>
+    <div class="divider"><hr><span>Plus</span><hr></div>
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-ghost" style="flex:1" id="btn-rules">📖 Règles</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: MODE SELECT ════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-mode">
+  <div class="header">
+    <button class="btn-back" data-back="screen-home">←</button>
+    <span style="font-weight:800">Nouveau jeu</span>
+    <div style="width:42px"></div>
+  </div>
+  <div class="screen-title">Choisir le mode</div>
+  <div class="screen-subtitle">Comment voulez-vous jouer ?</div>
+
+  <div class="mode-cards">
+    <div class="mode-card" id="mode-solo">
+      <div class="mode-card-icon solo">📱</div>
+      <div class="mode-card-info">
+        <div class="mode-card-title">Mode Solo</div>
+        <div class="mode-card-desc">Deux joueurs, un seul téléphone. Buzzez le premier !</div>
+      </div>
+      <div class="mode-card-arrow">›</div>
+    </div>
+    <div class="mode-card" id="mode-multi">
+      <div class="mode-card-icon multi">📡</div>
+      <div class="mode-card-info">
+        <div class="mode-card-title">Multijoueur</div>
+        <div class="mode-card-desc">Deux téléphones, synchronisation en temps réel via Wi-Fi.</div>
+      </div>
+      <div class="mode-card-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: SETUP SOLO ════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-setup-solo">
+  <div class="header">
+    <button class="btn-back" data-back="screen-mode">←</button>
+    <span style="font-weight:800">Mode Solo</span>
+    <div style="width:42px"></div>
+  </div>
+
+  <div class="setup-content">
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">🔴 Joueur 1 – Nom</label>
+        <input class="form-input" id="solo-p1-name" type="text" placeholder="Ex: Marie" maxlength="16">
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">🟣 Joueur 2 – Nom</label>
+        <input class="form-input" id="solo-p2-name" type="text" placeholder="Ex: Lucas" maxlength="16">
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">🏆 Score cible</label>
+        <div class="chip-group">
+          <button class="chip" data-target="5">5 pts</button>
+          <button class="chip selected" data-target="10">10 pts</button>
+          <button class="chip" data-target="20">20 pts</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">⏱️ Durée du timer</label>
+        <div class="chip-group">
+          <button class="chip" data-timer="15">15s</button>
+          <button class="chip selected" data-timer="30">30s</button>
+          <button class="chip" data-timer="60">60s</button>
+          <button class="chip" data-timer="0">∞</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-lg btn-full" id="btn-start-solo">
+      🚀 Démarrer la partie
+    </button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: SETUP MULTI HOST ══════════════════════════════════════════════ -->
+<div class="screen" id="screen-setup-multi">
+  <div class="header">
+    <button class="btn-back" data-back="screen-mode">←</button>
+    <span style="font-weight:800">Créer une partie</span>
+    <div style="width:42px"></div>
+  </div>
+
+  <div class="setup-content">
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">👤 Ton prénom</label>
+        <input class="form-input" id="host-name" type="text" placeholder="Ex: Marie" maxlength="16">
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">🏆 Score cible</label>
+        <div class="chip-group">
+          <button class="chip" data-target="5">5 pts</button>
+          <button class="chip selected" data-target="10">10 pts</button>
+          <button class="chip" data-target="20">20 pts</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">⏱️ Durée du timer</label>
+        <div class="chip-group">
+          <button class="chip" data-timer="15">15s</button>
+          <button class="chip selected" data-timer="30">30s</button>
+          <button class="chip" data-timer="60">60s</button>
+          <button class="chip" data-timer="0">∞</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-lg btn-full" id="btn-create-room">
+      📡 Créer la partie
+    </button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: JOIN ═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-join">
+  <div class="header">
+    <button class="btn-back" data-back="screen-home">←</button>
+    <span style="font-weight:800">Rejoindre</span>
+    <div style="width:42px"></div>
+  </div>
+
+  <div class="setup-content">
+    <div style="text-align:center;padding:24px 0">
+      <div style="font-size:3rem;margin-bottom:12px">🔗</div>
+      <div style="font-size:1.1rem;font-weight:700">Entrez le code de la partie</div>
+      <div style="font-size:0.9rem;color:var(--text-muted);margin-top:6px">Demandez le code à celui qui a créé la partie</div>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">👤 Ton prénom</label>
+        <input class="form-input" id="join-name" type="text" placeholder="Ex: Lucas" maxlength="16">
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">🔑 Code de la partie</label>
+        <input class="form-input" id="join-code" type="text" placeholder="XXXXXX"
+               maxlength="6" style="letter-spacing:6px;font-size:1.4rem;text-align:center;text-transform:uppercase">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-lg btn-full" id="btn-join-room">
+      🚀 Rejoindre la partie
+    </button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: WAITING ROOM ══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-waiting">
+  <div class="header">
+    <button class="btn-back" id="btn-leave-room">←</button>
+    <span style="font-weight:800">Salle d'attente</span>
+    <div style="width:42px"></div>
+  </div>
+
+  <div class="setup-content">
+    <div class="room-code-display">
+      <div class="room-code-label">Code de la partie</div>
+      <div class="room-code-value" id="display-room-code">------</div>
+      <div class="room-code-hint">📋 Donne ce code à ton adversaire</div>
+    </div>
+
+    <div class="players-waiting">
+      <div class="player-slot connected" id="slot-p1">
+        <div class="player-avatar p1" id="avatar-p1">?</div>
+        <div class="player-slot-info">
+          <div class="player-slot-name" id="slot-p1-name">En attente…</div>
+          <div class="player-slot-status">Hôte · Créateur</div>
+        </div>
+        <span>✅</span>
+      </div>
+      <div class="player-slot" id="slot-p2">
+        <div class="player-avatar p2" id="avatar-p2">?</div>
+        <div class="player-slot-info">
+          <div class="player-slot-name" id="slot-p2-name">En attente…</div>
+          <div class="player-slot-status" id="slot-p2-status">Pas encore connecté</div>
+        </div>
+        <div class="spinner" id="p2-spinner"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-ghost btn-sm" id="btn-copy-code">📋 Copier le code</button>
+    </div>
+
+    <button class="btn btn-success btn-lg btn-full" id="btn-start-multi" disabled>
+      ⏳ En attente du 2ème joueur
+    </button>
+    <div id="guest-waiting-msg" style="text-align:center;color:var(--text-muted);font-size:0.9rem;display:none">
+      En attente que l'hôte démarre la partie…
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: GAME ═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-game">
+
+  <!-- Header: scores + timer -->
+  <div class="game-header">
+    <div class="scores-bar">
+      <div class="score-badge" id="score-p1">
+        <div class="score-name" id="score-p1-name">J1</div>
+        <div class="score-value" id="score-p1-val">0</div>
+      </div>
+      <div style="color:var(--text-muted);font-weight:900;font-size:0.8rem">VS</div>
+      <div class="score-badge" id="score-p2">
+        <div class="score-name" id="score-p2-name">J2</div>
+        <div class="score-value" id="score-p2-val">0</div>
+      </div>
+    </div>
+
+    <div class="timer-wrap" id="timer-wrap">
+      <svg class="timer-svg" width="64" height="64" viewBox="0 0 64 64">
+        <circle class="timer-bg" cx="32" cy="32" r="26"/>
+        <circle class="timer-arc" id="timer-arc" cx="32" cy="32" r="26"/>
+      </svg>
+      <div class="timer-text" id="timer-text">30</div>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status-bar" id="status-bar"></div>
+
+  <!-- Category -->
+  <div class="category-section">
+    <div class="category-card" id="category-card" style="background:linear-gradient(135deg,#E94560,#C73652)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="category-emoji" id="category-emoji">🌍</div>
+        <div class="round-indicator" id="round-indicator">Manche 1</div>
+      </div>
+      <div class="category-label">Catégorie</div>
+      <div class="category-name" id="category-name">Capitales africaines</div>
+    </div>
+  </div>
+
+  <!-- Letter tiles -->
+  <div class="letters-section">
+    <div class="letter-tile-wrap">
+      <div class="letter-tile p1" id="letter-p1">M</div>
+      <div class="tile-player-name" id="tile-p1-name">Joueur 1</div>
+    </div>
+    <div style="display:flex;align-items:center;font-size:1.5rem;color:var(--text-muted);font-weight:900">+</div>
+    <div class="letter-tile-wrap">
+      <div class="letter-tile p2" id="letter-p2">A</div>
+      <div class="tile-player-name" id="tile-p2-name">Joueur 2</div>
+    </div>
+  </div>
+
+  <!-- Buzz buttons: solo = 2 buttons, multi = 1 button -->
+  <div class="buzz-section" id="buzz-section-solo">
+    <button class="buzz-btn p1-btn" id="buzz-p1">
+      <span class="buzz-icon">🙋</span>
+      <span id="buzz-p1-label">Joueur 1</span>
+      <span style="font-size:0.75rem;opacity:0.8">J'AI TROUVÉ !</span>
+    </button>
+    <button class="buzz-btn p2-btn" id="buzz-p2">
+      <span class="buzz-icon">🙋</span>
+      <span id="buzz-p2-label">Joueur 2</span>
+      <span style="font-size:0.75rem;opacity:0.8">J'AI TROUVÉ !</span>
+    </button>
+  </div>
+
+  <div class="buzz-multi" id="buzz-section-multi" style="display:none">
+    <button class="btn" id="buzz-multi-btn">
+      🙋 J'AI TROUVÉ !
+    </button>
+  </div>
+
+  <!-- History -->
+  <div class="history-section">
+    <div class="history-title">Historique des manches</div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: END ════════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-end">
+  <div class="end-hero">
+    <div class="winner-crown" id="end-crown">👑</div>
+    <div class="winner-label">Gagnant</div>
+    <div class="winner-name" id="end-winner-name">Joueur 1</div>
+  </div>
+
+  <div class="end-scores">
+    <div class="end-score-card winner-card" id="end-card-p1">
+      <div class="end-score-player" id="end-p1-name">J1</div>
+      <div class="end-score-num" id="end-p1-score">0</div>
+      <div style="font-size:0.8rem;color:var(--text-muted)">points</div>
+    </div>
+    <div class="end-score-card" id="end-card-p2">
+      <div class="end-score-player" id="end-p2-name">J2</div>
+      <div class="end-score-num" id="end-p2-score">0</div>
+      <div style="font-size:0.8rem;color:var(--text-muted)">points</div>
+    </div>
+  </div>
+
+  <div class="end-stats" id="end-stats">
+    <div class="end-stat-row">
+      <span class="end-stat-label">Manches jouées</span>
+      <span class="end-stat-value" id="stat-rounds">0</span>
+    </div>
+    <div class="end-stat-row">
+      <span class="end-stat-label">Meilleur mot</span>
+      <span class="end-stat-value" id="stat-best-word">—</span>
+    </div>
+    <div class="end-stat-row">
+      <span class="end-stat-label">Manches nulles</span>
+      <span class="end-stat-value" id="stat-draws">0</span>
+    </div>
+  </div>
+
+  <div class="end-actions">
+    <button class="btn btn-accent btn-lg btn-full" id="btn-rematch">
+      🔁 Revanche !
+    </button>
+    <button class="btn btn-ghost btn-full" id="btn-share">
+      📤 Partager le résultat
+    </button>
+    <button class="btn btn-outline btn-full" id="btn-home-end">
+      🏠 Retour à l'accueil
+    </button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: RULES ══════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-rules">
+  <div class="header">
+    <button class="btn-back" data-back="screen-home">←</button>
+    <span style="font-weight:800">Règles du jeu</span>
+    <div style="width:42px"></div>
+  </div>
+
+  <div class="rules-content">
+    <div class="rules-step">
+      <div class="rules-num">1</div>
+      <div class="rules-step-text">
+        <div class="rules-step-title">Une catégorie est tirée</div>
+        <div class="rules-step-desc">Ex : Capitales africaines, Films, Fruits…</div>
+      </div>
+    </div>
+    <div class="rules-step">
+      <div class="rules-num">2</div>
+      <div class="rules-step-text">
+        <div class="rules-step-title">Chaque joueur reçoit une lettre</div>
+        <div class="rules-step-desc">Les deux lettres sont différentes et visibles par tous.</div>
+      </div>
+    </div>
+    <div class="rules-step">
+      <div class="rules-num">3</div>
+      <div class="rules-step-text">
+        <div class="rules-step-title">Trouvez un mot !</div>
+        <div class="rules-step-desc">Le mot doit appartenir à la catégorie ET contenir les deux lettres.</div>
+      </div>
+    </div>
+    <div class="rules-step">
+      <div class="rules-num">4</div>
+      <div class="rules-step-text">
+        <div class="rules-step-title">Buzzez le premier</div>
+        <div class="rules-step-desc">Le premier qui trouve buzze et dit son mot. S'il est valide, il marque un point !</div>
+      </div>
+    </div>
+
+    <div class="rules-example card">
+      <div class="rules-example-title">EXEMPLE</div>
+      <div style="font-size:0.9rem;color:var(--text-muted);line-height:1.7">
+        Catégorie : <strong style="color:var(--text)">Capitales africaines</strong><br>
+        Lettre J1 : <strong style="color:#E94560">M</strong> &nbsp;+&nbsp; Lettre J2 : <strong style="color:#9B59B6">A</strong><br>
+        Réponse : <strong style="color:var(--success)">BAMAKO</strong> ✅ (contient M et A)<br>
+        Autre valide : <strong style="color:var(--success)">KAMPALA</strong> ✅ (contient M et A)
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:800;margin-bottom:8px">⚡ Validation automatique</div>
+      <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.5">
+        L'application vérifie automatiquement que ton mot contient les deux lettres requises (les accents sont ignorés). La validité de la catégorie est vérifiée sur l'honneur entre joueurs.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCRIPTS ════════════════════════════════════════════════════════════════ -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/categories.js"></script>
+<script src="/js/sounds.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
