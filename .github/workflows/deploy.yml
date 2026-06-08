@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
 
-# Un seul déploiement à la fois ; les suivants attendent
 concurrency:
   group: deploy-hetzner-123mot
   cancel-in-progress: false
@@ -28,25 +27,25 @@ jobs:
           APP_DIR="/opt/123mot"
           LOCK="/tmp/123mot-deploy.lock"
 
-          # Verrou : empêche deux déploiements simultanés
           exec 9>"$LOCK"
           if ! flock -w 300 9; then
-            echo "Un déploiement est déjà en cours (timeout 300s)"; exit 1
+            echo "Déploiement déjà en cours (timeout 300s)"; exit 1
           fi
 
-          # Créer le dossier si première fois
-          mkdir -p "$APP_DIR"
           cd "$APP_DIR"
 
-          # Nettoyer les containers zombies éventuels
+          # Nettoyer les containers zombies
           docker ps -a --format '{{.Names}}' \
-            | grep -E '_123mot-(app)-1$' \
+            | grep '123mot-app' \
             | xargs -r docker rm -f || true
 
-          git pull origin main
+          # Récupérer le code (le docker-compose.yml serveur est exclu via .git/info/exclude)
+          git fetch origin main
+          git reset --hard origin/main
+
+          # Reconstruire et redémarrer
           docker compose build app
           docker compose up -d app
           docker image prune -f
-          echo "✅ Déploiement 1,2,3 Mot terminé avec succès — $(date)"
+          echo "✅ Déployé avec succès — $(date)"
           DEPLOY
-
